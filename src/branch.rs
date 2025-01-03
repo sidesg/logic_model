@@ -12,6 +12,7 @@ pub struct Branch {
 #[derive(PartialEq)]
 #[derive(Debug)]
 enum BranchState {
+    NonTerminal,
     Open,
     Closed
 }
@@ -28,6 +29,23 @@ impl Branch {
         }
     }
 
+    // pub fn get_first_active_branch(&mut self) -> Option<&mut Branch> {
+    //     if let Some(first_node) = Branch::inner_get_first_active(&mut self.formulas) {
+    //         return Some(self)
+    //     } else if let Some(children) = &mut self.children {
+    //         if let Some(first_active_branch) = children
+    //             .iter_mut()
+    //             .filter(|child_branch| child_branch.get_first_active_branch().is_some())
+    //             .next() {
+    //                 Some(first_active_branch)
+    //             } else {
+    //                 None
+    //             }
+    //     } else {
+    //         None
+    //     }      
+    // }
+
     pub fn get_first_active_node(&mut self) -> Option<&mut Node> {
         if let Some(first_node) = Branch::inner_get_first_active(&mut self.formulas) {
             return Some(first_node)
@@ -35,7 +53,7 @@ impl Branch {
             let mut first_nodes = children
                 .iter_mut()
                 .map(|child_branch| child_branch.get_first_active_node());
-            return first_nodes.next()?
+            first_nodes.next()?
         } else {
             None
         }
@@ -55,7 +73,11 @@ impl Branch {
         }
     }
 
-    pub fn split_branch(&self) {
+    pub fn get_unclosed(&self) -> Option<Vec<& Branch>> {
+        todo!()
+    }
+
+    pub fn add_fork(&mut self) {
         todo!()
     }
 }
@@ -64,15 +86,16 @@ impl Branch {
 #[derive(Debug)]
 enum NodeState {
     Active,
-    Inactive
+    Inactive,
+    WaitingNewWorlds,
 }
 
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub struct Node {
-    formula: String,
+    pub formula: String,
     world: Rc<World>,
-    state: NodeState
+    state: NodeState,
 }
 
 impl Node {
@@ -84,8 +107,12 @@ impl Node {
         }
     }
 
-    fn deactivate(&mut self) {
+    pub fn deactivate(&mut self) {
         self.state = NodeState::Inactive;
+    }
+
+    pub fn wait(&mut self) {
+        self.state = NodeState::WaitingNewWorlds;
     }
 }
 

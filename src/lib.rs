@@ -4,10 +4,15 @@ use std::collections::HashMap;
 use std::rc::Rc;    
 
 mod world;
+use parser::Instructions;
+
 use crate::world::World;
 
 mod branch;
 use crate::branch::Branch;
+
+mod parser;
+use crate::parser::{Parser, InstructionOperator};
 
 struct ModalOptions {
     rho: bool,
@@ -47,12 +52,43 @@ impl Model {
             tableau: Branch::make_root(formulas, &world0)
         }
     }
+
+    pub fn evaluate_next_node(&mut self) {
+        let active_node = self.tableau.get_first_active_node();
+        match self.tableau.get_first_active_node() {
+            Some(active_node) => {
+                let instructions = Parser::parse_formula(&active_node.formula).unwrap();
+                self.implement_instructions(instructions);
+            },
+            None => {
+                match self.tableau.get_unclosed() {
+                    Some(unclosed_branches) => self.build_countermodel(),
+                    None => todo!() // entailment obtains
+                }
+            }
+        }
+    }
+
+    fn implement_instructions(&mut self, instructions: Instructions) {
+        match instructions.operator {
+            InstructionOperator::And => todo!(),
+            InstructionOperator::Or => todo!(),
+            InstructionOperator::MaterialImplecation => todo!(),
+            InstructionOperator::Not => todo!(),
+            InstructionOperator::Necessary => todo!(),
+            InstructionOperator::Possible => todo!()
+        }
+    }
     
     fn add_world(&mut self, from: World) {
         todo!()
     }
 
     fn update_wrw(&mut self) {
+        todo!()
+    }
+
+    fn build_countermodel(&self) {
         todo!()
     }
 
