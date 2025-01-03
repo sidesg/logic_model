@@ -4,17 +4,13 @@ use std::collections::HashMap;
 use std::rc::Rc;    
 
 mod world;
-use parser::Instructions;
-
 use crate::world::World;
-
-mod branch;
-use crate::branch::Branch;
-
+mod tableau;
+use crate::tableau::Tableau;
 mod parser;
-use crate::parser::{Parser, InstructionOperator};
+use crate::parser::{Parser, InstructionOperator, Instructions};
 
-struct ModalOptions {
+pub struct ModalOptions {
     rho: bool,
     sigma: bool,
     tau: bool,
@@ -32,16 +28,16 @@ impl ModalOptions {
     }
 }
 
-struct Model {
+pub struct Model {
     worlds: HashMap<u64, Rc<World>>,
     modal_options: ModalOptions,
     wrw: Option<Vec<(World, World)>>,
-    tableau: Branch
+    tableau: Tableau
 }
 
 impl Model {
     pub  fn new(options: ModalOptions, formulas: Vec<String>) -> Model {
-        let world0 = Rc::new(World::first_world());
+        let world0 = Rc::new(World::new(0));
         let mut worlds = HashMap::new();
         worlds.insert(0, Rc::clone(&world0));
         
@@ -49,16 +45,21 @@ impl Model {
             worlds: worlds,
             modal_options: options,
             wrw: None,
-            tableau: Branch::make_root(formulas, &world0)
+            tableau: Tableau::new(formulas, &world0)
         }
     }
 
+    
     pub fn evaluate_next_node(&mut self) {
         let active_node = self.tableau.get_first_active_node();
         match self.tableau.get_first_active_node() {
             Some(active_node) => {
                 let instructions = Parser::parse_formula(&active_node.formula).unwrap();
                 self.implement_instructions(instructions);
+                // update R
+                // update necessity formulas
+                // add closures
+                // check terminals {if all closed, entailment obtains}
             },
             None => {
                 match self.tableau.get_unclosed() {
