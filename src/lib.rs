@@ -9,24 +9,10 @@ mod tableau;
 use crate::tableau::Tableau;
 mod parser;
 use crate::parser::{Parser, InstructionOperator, Instructions};
+mod searches;
+mod modal_config;
+use crate::modal_config::ModalOptions;
 
-pub struct ModalOptions {
-    rho: bool,
-    sigma: bool,
-    tau: bool,
-    eta: bool
-}
-
-impl ModalOptions {
-    pub fn all_true() -> ModalOptions {
-        ModalOptions {
-            rho: true,
-            sigma: true,
-            tau: true,
-            eta: true
-        }
-    }
-}
 
 pub struct Model {
     worlds: HashMap<u64, Rc<World>>,
