@@ -6,7 +6,7 @@ pub trait GraphSearch {
 
 pub struct DepthFirstSearch {
     marked: Vec<usize>,
-    edge_to: HashMap<usize, usize>,
+    edge_to: Option<HashMap<usize, usize>>,
     count: usize,
     source: usize
 }
@@ -17,11 +17,13 @@ impl DepthFirstSearch {
             source: source,
             count: 0,   
             marked: Vec::new(),
-            edge_to: HashMap::new()
+            edge_to: Some(HashMap::new())
         };
 
         if let Some(worlds) = g.adj(source) {
             dfs.dfs(g, source);
+        } else {
+            dfs.edge_to = None;
         }
         dfs
     }
@@ -30,7 +32,9 @@ impl DepthFirstSearch {
         if let Some(adj) = g.adj(vertex) {
             for w in adj.iter() {
                 if !(self.marked.contains(&w)) {
-                    self.edge_to.insert(*w, vertex);
+                    self.edge_to.as_mut()
+                        .expect("New search should always start with Some(Hashmap)")
+                        .insert(*w, vertex);
                     self.dfs(g, *w);
                     self.marked.push(*w);
                     self.count += 1;
@@ -60,7 +64,9 @@ impl DepthFirstSearch {
 
             let mut x = v;
             loop {
-                x = *(self.edge_to.get(&x).unwrap());
+                x = *(self.edge_to.as_ref()
+                    .expect("If edge_to is None, flow should follow first if")
+                    .get(&x).unwrap());
                 if x == self.source { break };
                 path.push(x);    
             }
@@ -73,7 +79,7 @@ impl DepthFirstSearch {
 pub struct BreadthFirstSearch {
     source: usize,
     marked: Vec<usize>,
-    edge_to: HashMap<usize, usize>
+    edge_to: Option<HashMap<usize, usize>>
 }
 
 impl BreadthFirstSearch {
@@ -81,9 +87,14 @@ impl BreadthFirstSearch {
         let mut bfs = BreadthFirstSearch{
             source: source,
             marked: Vec::new(),
-            edge_to: HashMap::new()
+            edge_to: Some(HashMap::new())
         };
-        bfs.bfs(g, source);
+        
+        if let Some(worlds) = g.adj(source) {
+            bfs.bfs(g, source);
+        } else {
+            bfs.edge_to = None;
+        }
 
         bfs
     }
@@ -97,7 +108,9 @@ impl BreadthFirstSearch {
             let v = queue.pop_front().unwrap();
             for w in g.adj(v).unwrap().iter() {
                 if !(self.marked.contains(w)) {
-                    self.edge_to.insert(*w, v);
+                    self.edge_to.as_mut()
+                        .expect("New seach should always have Some(HashMap)")
+                        .insert(*w, v);
                     self.marked.push(*w);
                     queue.push_back(*w);
                 }
@@ -118,7 +131,9 @@ impl BreadthFirstSearch {
 
             let mut x = v;
             loop {
-                x = *(self.edge_to.get(&x).unwrap());
+                x = *(self.edge_to.as_ref()
+                    .expect("If .marked is not empty, .edge_to is not empty")
+                    .get(&x).unwrap());
                 if x == self.source { break };
                 path.push(x);    
             }
@@ -135,11 +150,12 @@ impl BreadthFirstSearch {
         }
     }
 
+    // Returns Vec of shortest path from target to source node if one exists.
     pub fn shortest_path<T: GraphSearch>(g: &T, source: usize, target: usize) -> Option<Vec<usize>> {
         let mut bfs = BreadthFirstSearch{
             source: source,
             marked: Vec::new(),
-            edge_to: HashMap::new()
+            edge_to: Some(HashMap::new())
         };
         let mut queue: VecDeque<usize> = VecDeque::new();
         bfs.marked.push(source);
@@ -149,11 +165,15 @@ impl BreadthFirstSearch {
             let v = queue.pop_front().unwrap();
             for w in g.adj(v).unwrap().iter() {
                 if *w == target {
-                    bfs.edge_to.insert(*w, v);
+                    bfs.edge_to.as_mut()
+                        .expect("New search always has Some(HashMap)")
+                        .insert(*w, v);
                     bfs.marked.push(*w);
                     break 'outer;                    
                 } else if !(bfs.marked.contains(w)) {
-                    bfs.edge_to.insert(*w, v);
+                    bfs.edge_to.as_mut()
+                        .expect("New search always has Some(HashMap)")
+                        .insert(*w, v);
                     bfs.marked.push(*w);
                     queue.push_back(*w);
                 }

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::rc::Rc;    
 
 mod world;
-use crate::world::World;
+use crate::world::{World, WorldGraph};
 mod tableau;
 use crate::tableau::Tableau;
 mod parser;
@@ -15,7 +15,7 @@ use crate::modal_config::ModalOptions;
 
 
 pub struct Model {
-    worlds: HashMap<u64, Rc<World>>,
+    worlds: WorldGraph,
     modal_options: ModalOptions,
     wrw: Option<Vec<(World, World)>>,
     tableau: Tableau
@@ -28,33 +28,33 @@ impl Model {
         worlds.insert(0, Rc::clone(&world0));
         
         Model {
-            worlds: worlds,
+            worlds: WorldGraph::new(1),
             modal_options: options,
             wrw: None,
-            tableau: Tableau::new(formulas, &world0)
+            tableau: Tableau::new(formulas)
         }
     }
 
     
-    pub fn evaluate_next_node(&mut self) {
-        let active_node = self.tableau.get_first_active_node();
-        match self.tableau.get_first_active_node() {
-            Some(active_node) => {
-                let instructions = Parser::parse_formula(&active_node.formula).unwrap();
-                self.implement_instructions(instructions);
-                // update R
-                // update necessity formulas
-                // add closures
-                // check terminals {if all closed, entailment obtains}
-            },
-            None => {
-                match self.tableau.get_unclosed() {
-                    Some(unclosed_branches) => self.build_countermodel(),
-                    None => todo!() // entailment obtains
-                }
-            }
-        }
-    }
+    // pub fn evaluate_next_node(&mut self) {
+    //     let active_node = self.tableau.get_first_active_node();
+    //     match self.tableau.get_first_active_node() {
+    //         Some(active_node) => {
+    //             let instructions = Parser::parse_formula(&active_node.formula).unwrap();
+    //             self.implement_instructions(instructions);
+    //             // update R
+    //             // update necessity formulas
+    //             // add closures
+    //             // check terminals {if all closed, entailment obtains}
+    //         },
+    //         None => {
+    //             match self.tableau.get_unclosed() {
+    //                 Some(unclosed_branches) => self.build_countermodel(),
+    //                 None => todo!() // entailment obtains
+    //             }
+    //         }
+    //     }
+    // }
 
     fn implement_instructions(&mut self, instructions: Instructions) {
         match instructions.operator {
