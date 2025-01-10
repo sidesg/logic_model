@@ -13,7 +13,7 @@ impl Tableau {
         fn next_child(node: usize, len: usize) -> HashSet<usize> {
             let mut output = HashSet::new();
             let child = node + 1;
-            if child > len {
+            if child < len {
                 output.insert(child);
             } 
             
@@ -32,15 +32,6 @@ impl Tableau {
     }
 
     fn testing_new(formulas: Vec<String>) -> Tableau {
-        fn next_child(node: usize, len: usize) -> HashSet<usize> {
-            let mut output = HashSet::new();
-            let child = node + 1;
-            if child > len {
-                output.insert(child);
-            } 
-            
-            output
-        }
         let node_count = formulas.len();
 
         Tableau {
@@ -80,33 +71,17 @@ impl Tableau {
     }
 
     pub fn unclosed_branches(&self) -> Option<Vec<Vec<usize>>> {
-        // let mut paths: Vec<_> = Vec::new();
-
-        // let terminals = self.terminal_unclosed(0)?;
-
-        // for terminal in terminals.iter() {
-        //     if let Some(terminal_path) = BreadthFirstSearch::shortest_path(self, 0, *terminal) {
-        //         paths.push(terminal_path);
-        //     }
-        // }
-        // Some(paths)
-
         let paths = self.terminal_unclosed(0)?.iter()
             .map(|t_node| BreadthFirstSearch::shortest_path(self, 0, *t_node).unwrap())
             .collect();
         Some(paths)
     }
 
-    pub fn terminal_unclosed(&self, root: usize) -> Option<Vec<usize>> {
-        let active_nodes = self.active_nodes()?;
-        let mut terminal_unclosed: Vec<usize> = Vec::new();
-        
-        for idx in active_nodes {
-            if self.adj(idx)?.len() == 0 {
-                terminal_unclosed.push(idx);
-            }
-        }
-
+    fn terminal_unclosed(&self, root: usize) -> Option<Vec<usize>> {
+        let terminal_unclosed = self.active_nodes()?.iter()
+            .filter(|idx| self.adj(**idx).unwrap().len() == 0)
+            .map(|idx| *idx)
+            .collect(); 
         Some(terminal_unclosed)
     }
 }
@@ -176,6 +151,27 @@ fn active_tests() {
 }
 
 #[test]
+fn new_tableau() {
+    let rootformulas: Vec<String> = vec![
+        String::from("first formula"),
+        String::from("second formula"),
+        String::from("third formula")
+    ];
+    let tab = Tableau::new(rootformulas);
+
+    let mut hash_map: HashMap<usize, HashSet<usize>> = HashMap::new();
+    let mut map: HashSet<usize> = HashSet::new();
+    map.insert(1);
+    hash_map.insert(0, map);
+    let mut map: HashSet<usize> = HashSet::new();
+    map.insert(2);
+    hash_map.insert(1, map);
+    hash_map.insert(2, HashSet::new());
+
+    assert_eq!(tab.adj, hash_map)
+}
+
+#[test]
 fn branching_test() {
     let formulas = vec![
         "one".to_string(),
@@ -195,7 +191,8 @@ fn branching_test() {
     tableau.add_child(3, 5);
     tableau.add_child(4, 6);
 
-    let terminals = tableau.unclosed_branches().unwrap();
+    let mut terminals = tableau.unclosed_branches().unwrap();
+    terminals.sort();
 
     let ex_vecs: Vec<Vec<usize>> = vec![
         vec![5, 3, 2, 1, 0],

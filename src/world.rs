@@ -52,6 +52,10 @@ impl WorldGraph {
         self.e
     }
 
+    pub fn all_worlds(&self) -> Vec<usize> {
+        self.adj.iter().map(|(k, v)| *k).collect()
+    }
+
     pub fn add_edge(&mut self, v: usize, w: usize) {
         if let Some(children) = self.adj.get_mut(&v) {
             if children.get(&w).is_none() {
@@ -102,16 +106,28 @@ impl WorldGraph {
         let config = config.as_tuple();
 
         if config.0 == true {
+            // reflexive
             let _ = self.adj.iter_mut()
                         .map(|(k, v)| v.insert(*k));
         }
         if config.1 == true {
             // symmetrical 
-            todo!()
+            let nodes: Vec<usize> = self.all_worlds();
+            for w in nodes {
+                let adjs = self.adj(w).unwrap().clone();
+                for w_prime in adjs {
+                    self.add_edge(w_prime, w);
+                }
+            }
         }
         if config.2 == true {
             // transitive
-            todo!()
+            let worlds = self.all_worlds();
+            for w in worlds {
+                if let Some(bfs) = BreadthFirstSearch::new_search(self, w).all_marked() {
+                    for w_prime in bfs { self.add_edge(w, w_prime); }
+                }
+            }
         }
         if config.3 == true {
             // extendable
