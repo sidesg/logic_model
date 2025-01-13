@@ -1,9 +1,7 @@
-pub struct Parser {
-
-}
+pub struct Parser;
 
 impl Parser {
-    pub fn parse_formula(formula: &str) -> Option<Instructions> {
+    pub fn parse_formula(formula: &str) {
         // read formula
 
         // create instructions
@@ -23,5 +21,5 @@ pub enum InstructionOperator {
 
 pub struct Instructions {
     pub operator: InstructionOperator,
-    pub variables: Vec<String>
+    pub variables: Vec<char>
 }

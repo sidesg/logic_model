@@ -105,15 +105,13 @@ impl WorldGraph {
         new_idx
     }
 
-    pub fn implement_modals(&mut self, config: ModalOptions) {
-        let config = config.as_tuple();
-
-        if config.0 {
+    pub fn implement_modals(&mut self, config: &ModalOptions) {
+        if config.rho() {
             // reflexive
             let _ = self.adj.iter_mut()
                         .map(|(k, v)| v.insert(*k));
         }
-        if config.1 {
+        if config.sigma() {
             // symmetrical 
             let nodes: Vec<usize> = self.all_worlds();
             for w in nodes {
@@ -123,7 +121,7 @@ impl WorldGraph {
                 }
             }
         }
-        if config.2 {
+        if config.tau() {
             // transitive
             let worlds = self.all_worlds();
             for w in worlds {
@@ -132,7 +130,7 @@ impl WorldGraph {
                 }
             }
         }
-        if config.3 {
+        if config.eta() {
             // extendable
             todo!()
         }

@@ -38,7 +38,7 @@ impl Tableau {
             nodes: formulas.into_iter().enumerate()
                 .map(|(idx, formula)| (idx, Node::new(formula, 0)))
                 .collect::<HashMap<usize, Node>>(),
-            adj: (0..node_count).into_iter()
+            adj: (0..node_count)
                 .map(|idx| (idx, HashSet::new()))
                 .collect::<HashMap<usize, HashSet<usize>>>()
         }
@@ -76,13 +76,31 @@ impl Tableau {
         Some(paths)
     }
 
+    pub fn find_contradictions(&mut self) {
+        // for each unclosed branche, look for pairs of nodes p, ¬p
+        // if found, close terminal node
+        if let Some(unclosed_branches) = self.unclosed_branches() {
+            for branch in unclosed_branches {
+                for node in branch.iter() {
+                    for node_prime in &branch[*node..] {
+                        todo!()
+                        // compare node and node_prime
+                    }
+                }
+            }
+        }
+    }
+
     fn terminal_unclosed(&self, root: usize) -> Option<Vec<usize>> {
         let terminal_unclosed = self.active_nodes()?.iter()
             .filter(|idx| self.adj(**idx).unwrap().is_empty())
             .copied()
-            // .map(|idx| *idx)
             .collect(); 
         Some(terminal_unclosed)
+    }
+
+    pub fn get_node(&mut self, id: usize) -> Option<&mut Node> {
+        self.nodes.get_mut(&id)
     }
 }
 

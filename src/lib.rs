@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use std::collections::HashMap;
-use std::rc::Rc;    
 
 mod world;
+use std::io::Error;
+use std::fs::read_to_string;
+
 use crate::world::{World, WorldGraph};
 mod tableau;
 use crate::tableau::Tableau;
@@ -17,44 +18,59 @@ use crate::modal_config::ModalOptions;
 pub struct Model {
     worlds: WorldGraph,
     modal_options: ModalOptions,
-    wrw: Option<Vec<(World, World)>>,
     tableau: Tableau
 }
 
 impl Model {
     pub  fn new(options: ModalOptions, formulas: Vec<String>) -> Model {
-        let world0 = Rc::new(World::new(0));
-        let mut worlds = HashMap::new();
-        worlds.insert(0, Rc::clone(&world0));
-        
         Model {
             worlds: WorldGraph::new(1),
             modal_options: options,
-            wrw: None,
             tableau: Tableau::new(formulas)
         }
     }
 
-    
-    // pub fn evaluate_next_node(&mut self) {
-    //     let active_node = self.tableau.get_first_active_node();
-    //     match self.tableau.get_first_active_node() {
-    //         Some(active_node) => {
-    //             let instructions = Parser::parse_formula(&active_node.formula).unwrap();
-    //             self.implement_instructions(instructions);
-    //             // update R
-    //             // update necessity formulas
-    //             // add closures
-    //             // check terminals {if all closed, entailment obtains}
-    //         },
-    //         None => {
-    //             match self.tableau.get_unclosed() {
-    //                 Some(unclosed_branches) => self.build_countermodel(),
-    //                 None => todo!() // entailment obtains
-    //             }
-    //         }
-    //     }
-    // }
+    pub fn from_file(filename: &str) -> Result<Model, Error> {
+        let formulas: Vec<String> = read_to_string(filename)?
+            .lines()
+            .map(String::from)
+            .collect();
+
+        let model = Model {
+            worlds: WorldGraph::new(1),
+            modal_options: ModalOptions::new_default(),
+            tableau: Tableau::new(formulas)
+        };
+
+        Ok(model)
+    }
+
+    pub fn eval_tableau(&mut self) {
+        while let Some(node_id) = self.tableau.first_active_node() {
+            self.eval_node(node_id);
+            self.tableau.find_contradictions();
+            if self.tableau.unclosed_branches().is_some() { todo!() };
+
+            // update wrw
+            // apply waiting necessity formulae
+            self.tableau.find_contradictions();
+            if self.tableau.unclosed_branches().is_some() { todo!() };
+        }
+
+        if let Some(open_branches) = self.tableau.unclosed_branches() {
+            let branch = open_branches.first().unwrap().clone();
+            self.build_countermodel(branch);
+        } 
+    }
+
+    fn eval_node(&mut self, node_id: usize) {
+        let node = self.tableau.get_node(node_id)
+            .expect("Calling function should make sure node_id is valid");
+        // get instructions
+        // implement instructions
+        //      create worlds, wrw
+        //      add formulae to open terminals 
+    }
 
     fn implement_instructions(&mut self, instructions: Instructions) {
         match instructions.operator {
@@ -66,16 +82,8 @@ impl Model {
             InstructionOperator::Possible => todo!()
         }
     }
-    
-    fn add_world(&mut self, from: World) {
-        todo!()
-    }
 
-    fn update_wrw(&mut self) {
-        todo!()
-    }
-
-    fn build_countermodel(&self) {
+    fn build_countermodel(&self, branch: Vec<usize>) {
         todo!()
     }
 

@@ -15,16 +15,32 @@ impl ModalOptions {
         }
     }
 
+    pub fn new_default() -> ModalOptions {
+        ModalOptions {
+            rho: true,
+            sigma: true,
+            tau: true,
+            eta: false
+        }       
+    }
+
     pub fn parse_config() -> ModalOptions {
         todo!()
     }
 
-    pub fn as_tuple(&self) -> (bool, bool, bool, bool) {
-        (
-            self.rho,
-            self.sigma,
-            self.tau,
-            self.eta
-        )
+    pub fn rho(&self) -> bool {
+        self.rho
+    }
+
+    pub fn sigma(&self) -> bool {
+        self.sigma
+    }
+
+    pub fn tau(&self) -> bool {
+        self.tau
+    }
+
+    pub fn eta(&self) -> bool {
+        self.eta
     }
 }
