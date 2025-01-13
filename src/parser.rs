@@ -3,7 +3,7 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn parse_formula(formula: &String) -> Option<Instructions> {
+    pub fn parse_formula(formula: &str) -> Option<Instructions> {
         // read formula
 
         // create instructions

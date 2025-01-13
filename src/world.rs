@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use crate::searches::{DepthFirstSearch, BreadthFirstSearch, GraphSearch};
+use crate::searches::{GraphSearcher, GraphSearch};
 use crate::modal_config::ModalOptions;
 
 #[derive(PartialEq)]
@@ -12,7 +12,7 @@ pub struct World {
 impl World {
     pub fn new(id: usize) -> World {
         World{
-            id: id,
+            id,
             c: None
         }
     }
@@ -28,7 +28,7 @@ pub struct WorldGraph {
 impl WorldGraph {
     pub fn new(v: usize) -> WorldGraph {
         let mut adj: HashMap<usize, HashSet<usize>> = HashMap::new(); 
-        let mut worlds: HashMap<usize, World> = HashMap::new();
+        let mut worlds: HashMap<usize, World> = HashMap::with_capacity(v);
         for i in 0..v {
             adj.insert(i, HashSet::new());
             worlds.insert(
@@ -37,10 +37,10 @@ impl WorldGraph {
             );
         };
         WorldGraph{
-            v: v,
+            v,
             e: 0,
-            adj: adj,
-            worlds: worlds
+            adj,
+            worlds
         }
     }
 
@@ -75,7 +75,7 @@ impl WorldGraph {
 
     pub fn connect_all(&mut self) {
         let mut worldids: Vec<usize> = Vec::new();
-        let _ = self.worlds.iter().map(|(k, _)| worldids.push(*k));
+        let _ = self.worlds.keys().map(|k| worldids.push(*k));
 
         for source in worldids.iter() {
             for target in worldids.iter() {
@@ -85,14 +85,17 @@ impl WorldGraph {
     }
 
     pub fn accessible(&self, node_id: usize) -> Option<Vec<&World>> {
-        if let Some(accessible_words) = self.adj(node_id) {
-            Some(accessible_words.iter()
-                .map(|i| self.worlds.get(i).unwrap())
-                .collect::<Vec<&World>>()
-            )
-        } else {
-            None
-        }
+        // if let Some(accessible_words) = self.adj(node_id) {
+        //     Some(accessible_words.iter()
+        //         .map(|i| self.worlds.get(i).unwrap())
+        //         .collect::<Vec<&World>>()
+        //     )
+        // } else {
+        //     None
+        // }
+        self.adj(node_id).map(|accessible_worlds| accessible_worlds.iter()
+            .map(|i| self.worlds.get(i).unwrap())
+            .collect::<Vec<&World>>())
     }
 
     pub fn add_world(&mut self) -> usize {
@@ -105,12 +108,12 @@ impl WorldGraph {
     pub fn implement_modals(&mut self, config: ModalOptions) {
         let config = config.as_tuple();
 
-        if config.0 == true {
+        if config.0 {
             // reflexive
             let _ = self.adj.iter_mut()
                         .map(|(k, v)| v.insert(*k));
         }
-        if config.1 == true {
+        if config.1 {
             // symmetrical 
             let nodes: Vec<usize> = self.all_worlds();
             for w in nodes {
@@ -120,25 +123,29 @@ impl WorldGraph {
                 }
             }
         }
-        if config.2 == true {
+        if config.2 {
             // transitive
             let worlds = self.all_worlds();
             for w in worlds {
-                if let Some(bfs) = BreadthFirstSearch::new_search(self, w).all_marked() {
+                if let Some(bfs) = GraphSearch::bfs(self, w).all_marked() {
                     for w_prime in bfs { self.add_edge(w, w_prime); }
                 }
             }
         }
-        if config.3 == true {
+        if config.3 {
             // extendable
             todo!()
         }
     }
 }
 
-impl GraphSearch for WorldGraph {
+impl GraphSearcher for WorldGraph {
     fn adj(&self, v: usize) -> Option<HashSet<usize>> {
         self.adj.get(&v).cloned()
+    }
+
+    fn v(&self) -> usize {
+        self.worlds.len()
     }
 }
 
@@ -198,7 +205,7 @@ fn basic_search() {
     wg.add_edge(2, 4);
     wg.add_edge(3, 5);
 
-    let search = DepthFirstSearch::new_search(&wg, 2);
+    let search = GraphSearch::dfs(&wg, 2);
     let mut available = search.all_marked().unwrap();
     available.sort();
 
@@ -225,6 +232,6 @@ fn shortest_path() {
     wg.add_edge(4, 6);
     wg.add_edge(5, 6);
 
-    let shortest_path = BreadthFirstSearch::shortest_path(&wg, 1, 6);
+    let shortest_path = GraphSearch::shortest_path(&wg, 1, 6);
     assert_eq!(vec![6, 4, 2, 1], shortest_path.unwrap());
 }

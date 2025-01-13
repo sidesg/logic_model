@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use crate::searches::{GraphSearch, BreadthFirstSearch};
+use crate::searches::{GraphSearcher, GraphSearch};
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -25,7 +25,7 @@ impl Tableau {
             nodes: formulas.into_iter().enumerate()
                 .map(|(idx, formula)| (idx, Node::new(formula, 0)))
                 .collect::<HashMap<usize, Node>>(),
-            adj: (0..node_count).into_iter()
+            adj: (0..node_count)
                 .map(|idx| (idx, next_child(idx, node_count)))
                 .collect::<HashMap<usize, HashSet<usize>>>()
         }
@@ -50,7 +50,7 @@ impl Tableau {
             .map(|(idx, _)| *idx)
             .collect::<Vec<usize>>();
 
-        if active_nodes.len() == 0 {
+        if active_nodes.is_empty() {
             None
         } else {
             Some(active_nodes)
@@ -59,8 +59,7 @@ impl Tableau {
 
     pub fn first_active_node(&self) -> Option<usize> {
         self.active_nodes()?
-            .iter()
-            .next()
+            .first()
             .copied()
     }
 
@@ -72,23 +71,28 @@ impl Tableau {
 
     pub fn unclosed_branches(&self) -> Option<Vec<Vec<usize>>> {
         let paths = self.terminal_unclosed(0)?.iter()
-            .map(|t_node| BreadthFirstSearch::shortest_path(self, 0, *t_node).unwrap())
+            .map(|t_node| GraphSearch::shortest_path(self, 0, *t_node).unwrap())
             .collect();
         Some(paths)
     }
 
     fn terminal_unclosed(&self, root: usize) -> Option<Vec<usize>> {
         let terminal_unclosed = self.active_nodes()?.iter()
-            .filter(|idx| self.adj(**idx).unwrap().len() == 0)
-            .map(|idx| *idx)
+            .filter(|idx| self.adj(**idx).unwrap().is_empty())
+            .copied()
+            // .map(|idx| *idx)
             .collect(); 
         Some(terminal_unclosed)
     }
 }
 
-impl GraphSearch for Tableau {
+impl GraphSearcher for Tableau {
     fn adj(&self, v: usize) -> Option<HashSet<usize>> {
         self.adj.get(&v).cloned()
+    }
+
+    fn v(&self) -> usize {
+        self.nodes.len()
     }
 }
 
@@ -103,8 +107,8 @@ pub struct Node {
 impl Node {
     fn new(formula: String, world: usize) -> Node {
         Node {
-            formula: formula,
-            world: world,
+            formula,
+            world,
             state: NodeState::Active
         }
     }
