@@ -8,6 +8,16 @@ pub struct Tableau {
     adj: HashMap<usize, HashSet<usize>>
 }
 
+impl GraphSearcher for Tableau {
+    fn adj(&self, v: usize) -> Option<HashSet<usize>> {
+        self.adj.get(&v).cloned()
+    }
+
+    fn v(&self) -> usize {
+        self.nodes.len()
+    }
+}
+
 impl Tableau {
     pub fn new(formulas: Vec<String>) -> Tableau {
         fn next_child(node: usize, len: usize) -> HashSet<usize> {
@@ -42,6 +52,10 @@ impl Tableau {
                 .map(|idx| (idx, HashSet::new()))
                 .collect::<HashMap<usize, HashSet<usize>>>()
         }
+    }
+
+    pub fn size(&self) -> usize {
+        self.nodes.len()
     }
 
     pub fn active_nodes(&self) -> Option<Vec<usize>> {
@@ -92,25 +106,16 @@ impl Tableau {
     }
 
     fn terminal_unclosed(&self, root: usize) -> Option<Vec<usize>> {
-        let terminal_unclosed = self.active_nodes()?.iter()
+        let search = GraphSearch::bfs(self, root);
+        let terminal_unclosed = search.all_marked()?.iter()
             .filter(|idx| self.adj(**idx).unwrap().is_empty())
             .copied()
-            .collect(); 
+            .collect();
         Some(terminal_unclosed)
     }
 
     pub fn get_node(&mut self, id: usize) -> Option<&mut Node> {
         self.nodes.get_mut(&id)
-    }
-}
-
-impl GraphSearcher for Tableau {
-    fn adj(&self, v: usize) -> Option<HashSet<usize>> {
-        self.adj.get(&v).cloned()
-    }
-
-    fn v(&self) -> usize {
-        self.nodes.len()
     }
 }
 

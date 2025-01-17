@@ -2,23 +2,22 @@
 #![allow(unused_variables)]
 
 mod world;
-use std::io::Error;
 use std::fs::read_to_string;
 
-use crate::world::{World, WorldGraph};
+use crate::world::WorldGraph;
 mod tableau;
 use crate::tableau::Tableau;
 mod parser;
-use crate::parser::{Parser, InstructionOperator, Instructions};
+use crate::parser::{InstructionOperator, Instructions};
 mod searches;
 mod modal_config;
 use crate::modal_config::ModalOptions;
-
+pub mod configs;
 
 pub struct Model {
     worlds: WorldGraph,
     modal_options: ModalOptions,
-    tableau: Tableau
+    pub tableau: Tableau
 }
 
 impl Model {
@@ -30,7 +29,7 @@ impl Model {
         }
     }
 
-    pub fn from_file(filename: &str) -> Result<Model, Error> {
+    pub fn from_file(filename: &str) -> Result<Model, std::io::Error> {
         let formulas: Vec<String> = read_to_string(filename)?
             .lines()
             .map(String::from)
@@ -88,13 +87,19 @@ impl Model {
     }
 
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_test() {
-    let rootformulas: Vec<String> = vec![
-        String::from("first formula"),
-        String::from("second formula"),
-        String::from("third formula")
-    ];
-    let model = Model::new(ModalOptions::all_true(), rootformulas);
+    #[test]
+    fn from_file() {
+        let model = Model::from_file("data/basic.txt").unwrap();
+        assert_eq!(3, model.tableau.size());
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_file_err() {
+        let model = Model::from_file("adfasdfa").unwrap();
+    }
 }
