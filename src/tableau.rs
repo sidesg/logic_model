@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use crate::searches::{GraphSearcher, GraphSearch};
+use crate::searches::{GraphSearch, GraphSearcher};
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -25,8 +25,8 @@ impl Tableau {
             let child = node + 1;
             if child < len {
                 output.insert(child);
-            } 
-            
+            }
+
             output
         }
         let node_count = formulas.len();
@@ -77,10 +77,16 @@ impl Tableau {
             .copied()
     }
 
-    pub fn add_child(&mut self, from_node: usize, to_node: usize) {
+    fn add_child(&mut self, from_node: usize, to_node: usize) {
         if let Some(adjacencies) = self.adj.get_mut(&from_node) {
             adjacencies.insert(to_node);
         }
+    }
+
+    pub fn new_node_from(&mut self, parent: usize, formula: String, world: usize) {
+        let new_node = Node::new(formula, world);
+        let new_key = self.nodes.keys().max().unwrap() + 1;
+        self.nodes.insert(new_key, new_node);
     }
 
     pub fn unclosed_branches(&self) -> Option<Vec<Vec<usize>>> {
@@ -105,7 +111,7 @@ impl Tableau {
         }
     }
 
-    fn terminal_unclosed(&self, root: usize) -> Option<Vec<usize>> {
+    pub fn terminal_unclosed(&self, root: usize) -> Option<Vec<usize>> {
         let search = GraphSearch::bfs(self, root);
         let terminal_unclosed = search.all_marked()?.iter()
             .filter(|idx| self.adj(**idx).unwrap().is_empty())
@@ -128,12 +134,16 @@ pub struct Node {
 }
 
 impl Node {
-    fn new(formula: String, world: usize) -> Node {
+    pub fn new(formula: String, world: usize) -> Node {
         Node {
             formula,
             world,
             state: NodeState::Active
         }
+    }
+
+    pub fn world(&self) -> usize {
+        self.world
     }
 
     pub fn formula(&self) -> &String {
