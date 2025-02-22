@@ -1,10 +1,5 @@
-use::std::collections::{HashSet, HashMap, VecDeque};
-
-pub trait GraphSearcher {
-    fn adj(&self, v: usize) -> Option<HashSet<usize>>;
-
-    fn v(&self) -> usize;
-}
+use::std::collections::{HashMap, VecDeque};
+use crate::graphs::Graph;
 
 pub struct GraphSearch {
     source: usize,
@@ -13,14 +8,14 @@ pub struct GraphSearch {
 }
 
 impl GraphSearch {
-    pub fn dfs<T: GraphSearcher>(g: &T, source: usize) -> GraphSearch {
+    pub fn dfs<T>(g: &Graph<T>, source: usize) -> GraphSearch {
         let mut dfs = GraphSearch {
             source,
             marked: Vec::new(),
-            edge_to: Some(HashMap::with_capacity(g.v()))
+            edge_to: Some(HashMap::with_capacity(g.size()))
         };
 
-        if let Some(worlds) = g.adj(source) {
+        if let Some(worlds) = g.adj_to(source) {
             dfs.inner_dfs(g, source);
         } else {
             dfs.edge_to = None;
@@ -28,8 +23,8 @@ impl GraphSearch {
         dfs
     }
 
-    fn inner_dfs<T: GraphSearcher>(&mut self, g: &T, v:usize) {
-        if let Some(adj) = g.adj(v) {
+    fn inner_dfs<T>(&mut self, g: &Graph<T>, v:usize) {
+        if let Some(adj) = g.adj_to(v) {
             for w in adj.iter() {
                 if !(self.marked.contains(w)) {
                     self.edge_to.as_mut()
@@ -42,14 +37,14 @@ impl GraphSearch {
         }       
     }
 
-    pub fn bfs<T: GraphSearcher>(g: &T, source: usize) -> GraphSearch {
+    pub fn bfs<T>(g: &Graph<T>, source: usize) -> GraphSearch {
         let mut bfs = GraphSearch{
             source,
             marked: Vec::new(),
-            edge_to: Some(HashMap::with_capacity(g.v()))
+            edge_to: Some(HashMap::with_capacity(g.size()))
         };
         
-        if let Some(worlds) = g.adj(source) {
+        if let Some(worlds) = g.adj_to(source) {
             bfs.inner_bfs(g, source);
         } else {
             bfs.edge_to = None;
@@ -58,14 +53,14 @@ impl GraphSearch {
         bfs
     }
 
-    fn inner_bfs<T: GraphSearcher>(&mut self, g: &T, source: usize) {
+    fn inner_bfs<T>(&mut self, g: &Graph<T>, source: usize) {
         let mut queue: VecDeque<usize> = VecDeque::new();
         // self.marked.push(source);
         queue.push_back(source);
 
         while !queue.is_empty() {
             let v = queue.pop_front().unwrap();
-            for w in g.adj(v).unwrap().iter() {
+            for w in g.adj_to(v).unwrap().iter() {
                 if !(self.marked.contains(w)) {
                     self.edge_to.as_mut()
                         .expect("New seach should always have Some(HashMap)")
@@ -105,15 +100,16 @@ impl GraphSearch {
                 path.push(x);    
             }
             path.push(self.source);
+            path.sort();
             Some(path)
         }
     }
 
-    pub fn shortest_path<T: GraphSearcher>(g: &T, source: usize, target: usize) -> Option<Vec<usize>> {
+    pub fn shortest_path<T>(g: &Graph<T>, source: usize, target: usize) -> Option<Vec<usize>> {
         let mut bfs = GraphSearch{
             source,
             marked: Vec::new(),
-            edge_to: Some(HashMap::with_capacity(g.v()))
+            edge_to: Some(HashMap::with_capacity(g.size()))
         };
         let mut queue: VecDeque<usize> = VecDeque::new();
         bfs.marked.push(source);
@@ -121,7 +117,7 @@ impl GraphSearch {
 
         'outer: while !queue.is_empty() {
             let v = queue.pop_front().unwrap();
-            for w in g.adj(v).unwrap().iter() {
+            for w in g.adj_to(v).unwrap().iter() {
                 if *w == target {
                     bfs.edge_to.as_mut()
                         .expect("New search always has Some(Vec)")

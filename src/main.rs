@@ -12,8 +12,8 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>  {
         tracing::error!("{}", err);
         exit(1);
     });
-    let model = Model::from_file(config.infile()).unwrap_or_else(|err| {
-        tracing::error!("{} ({})", err, config.infile());
+    let _ = Model::from_file(config.infile()).unwrap_or_else(|err| {
+        tracing::error!("{:?} ({})", err, config.infile());
         exit(1);
     });
 

@@ -3,7 +3,7 @@ enum ParseState {
     Parentheses
 }
 
-pub fn parse_formula(formula: &str) -> Result<Instructions, String> {
+pub fn parse_formula(formula: &str) -> Result<Instructions, Box<String>> {
     let mut int_formula = formula;
     let mut state = ParseState::Open;
     let mut temp_var = String::new();
@@ -27,7 +27,7 @@ pub fn parse_formula(formula: &str) -> Result<Instructions, String> {
                 else if ch.is_alphabetic() { variables.push(ch.to_string()); }
                 else { 
                     let err_msg = format!("Unable to parse char {} in {}", ch, formula);
-                    return Err(err_msg); 
+                    return Err(Box::new(err_msg)); 
                 }
             },
             ParseState::Parentheses => {

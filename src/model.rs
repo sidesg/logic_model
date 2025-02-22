@@ -1,22 +1,21 @@
 use std::fs::read_to_string;
 use std::process::exit;
-use crate::world::WorldGraph;
-use crate::tableau::Tableau;
+use crate::graphs::{Graph, node};
 use crate::modal_config::ModalOptions;
 use crate::parser::{Instructions, parse_formula};
 
 pub struct Model {
-    worlds: WorldGraph,
+    worlds: Graph<node::World>,
     modal_options: ModalOptions,
-    pub tableau: Tableau
+    pub tableau: Graph<node::Formula>
 }
 
 impl Model {
     pub  fn new(options: ModalOptions, formulas: Vec<String>) -> Model {
         Model {
-            worlds: WorldGraph::new(1),
+            worlds: Graph::<node::World>::new(1),
             modal_options: options,
-            tableau: Tableau::new(formulas)
+            tableau: Graph::<node::Formula>::new(formulas)
         }
     }
 
@@ -27,16 +26,16 @@ impl Model {
             .collect();
 
         let model = Model {
-            worlds: WorldGraph::new(1),
+            worlds: Graph::<node::World>::new(1),
             modal_options: ModalOptions::new_default(),
-            tableau: Tableau::new(formulas.clone())
+            tableau: Graph::<node::Formula>::new(formulas.clone())
         };
 
         tracing::info!("Model built {}", formulas.join(", "));
         Ok(model)
     }
 
-    pub fn eval_tableau(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn eval_tableau(&mut self) -> Result<(), Box<String>> {
         while let Some(node_id) = self.tableau.first_active_node() {
             self.eval_node(node_id)?;
             self.tableau.find_contradictions();
@@ -56,7 +55,7 @@ impl Model {
         Ok(())
     }
 
-    fn eval_node(&mut self, node_id: usize) -> Result<(), Box<dyn std::error::Error>> {
+    fn eval_node(&mut self, node_id: usize) -> Result<(), Box<String>> {
         let node = self.tableau.get_node(node_id)
             .expect("Calling function should make sure node_id is valid");
         let instructions: Instructions = parse_formula(node.formula())?;
